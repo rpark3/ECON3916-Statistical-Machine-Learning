@@ -7,7 +7,7 @@ This repository documents my work at the intersection of **economic theory, stat
 
 ## About Me
 
-I am an undergraduate economics student pursuing roles in **Data Analysis, Economic Consulting, and Finance**.  
+I am an undergraduate Biology student pursuing a minor in Economics  
 My focus is on building practical, data-driven skills while staying grounded in economic reasoning. I’m particularly interested in applying rigorous analytical methods to real-world economic and financial problems.
 
 ---
