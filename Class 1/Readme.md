@@ -1,20 +1,26 @@
 ## 🌍 Global Purchasing Power Parity Analysis via the Big Mac Index
 
 ### Project Title  
-**Global Purchasing Power Parity Analysis**
+**Global Purchasing Power Parity Analysis via the Big Mac Index**
 
 ### Objective  
-To empirically test the **Law of One Price** by using the Big Mac Index as a proxy for cross-country purchasing power parity (PPP) and identifying currency misalignments relative to the US Dollar.
+To empirically test the **Law of One Price** by using the Big Mac Index as a proxy for Purchasing Power Parity (PPP) and identifying systematic currency misalignments relative to the US Dollar.
+
+### Data Source  
+Raw price data from **The Economist Big Mac Index (January 2015 edition)**, manually structured into a custom dataset.
 
 ### Methodology  
-- Constructed a raw dataset from *The Economist’s* 2015 Big Mac Index data using manually defined Python dictionaries.  
-- Ingested and structured the data using Pandas for transparent, reproducible analysis.  
-- Computed **implied PPP exchange rates** by comparing local Big Mac prices to the US benchmark price.  
-- Calculated **currency valuation gaps** by measuring percentage deviations between implied PPP rates and actual market exchange rates.  
-- Interpreted deviations as indicators of **overvaluation**, **undervaluation**, and potential **arbitrage signals**.
+- Manually constructed a dataset from raw Big Mac price data using Python dictionaries.  
+- Ingested and organized the data using Pandas for transparent data handling.  
+- Calculated **implied PPP exchange rates** by comparing local Big Mac prices to the US benchmark price.  
+- Computed **percentage currency misalignment** by measuring deviations between implied PPP rates and observed market exchange rates.  
+- Interpreted deviations as evidence of **overvaluation**, **undervaluation**, and limits to international price arbitrage.
 
 ### Key Findings  
-The analysis revealed meaningful departures from purchasing power parity across countries.  
-For example, **[INSERT YOUR RESULT HERE — e.g., “the Norwegian Krone appeared significantly overvalued relative to the US Dollar, while several emerging market currencies showed persistent undervaluation”]**.  
+The results show clear departures from absolute Purchasing Power Parity.  
+The January 2015 data indicates that the **Norwegian Krone was significantly overvalued** against the US Dollar, while the **Chinese Yuan appeared undervalued**, consistent with structural cost differences and the **Balassa–Samuelson effect**.  
 
-These deviations highlight real-world frictions — including trade barriers, local cost structures, and market inefficiencies — that prevent immediate price equalization, demonstrating why absolute PPP rarely holds in practice despite its theoretical foundation.
+These findings highlight real-world frictions — including non-tradable input costs, local wage structures, and market segmentation — that prevent the Law of One Price from holding exactly, even in standardized consumer goods markets.
+
+### Tools Used  
+Python, Pandas, Seaborn, Matplotlib
