@@ -1,170 +1,73 @@
-import pandas as pd
-import numpy as np
-import matplotlib.pyplot as plt
-import seaborn as sns
-import matplotlib.patches as mpatches
-from sklearn.linear_model import LogisticRegression
-from sklearn.neighbors import NearestNeighbors
+# ECON 3916 — Assignment 3: The Causal Architecture
 
-# =============================================================================
-# PHASE 1 — Bootstrapping Non-Parametric Uncertainty
-# =============================================================================
+## Overview
+This project analyzes several statistical and causal inference problems faced by **SwiftCart Logistics**, an on-demand delivery platform. The goal is to move beyond fragile parametric assumptions and instead use computational methods to evaluate uncertainty, test algorithm performance, and estimate causal effects.
 
-# Step 1.1 — Zero-Inflated Tip Distribution
-np.random.seed(42)
-zeros = np.zeros(100)
-tips = np.random.exponential(scale=5.0, size=150)
-driver_tips = np.concatenate([zeros, tips])
+The project is implemented in **Python using Google Colab**.
 
-print("=== Step 1.1 ===")
-print(f"Sample size: {len(driver_tips)}")
-print(f"Observed Median: ${np.median(driver_tips):.2f}")
+Libraries used:
+- pandas
+- numpy
+- matplotlib
+- seaborn
+- scikit-learn
 
-# Step 1.2 — Manual Bootstrap Engine
-n_iterations = 10000
-bootstrap_medians = []
+---
 
-for _ in range(n_iterations):
-    resample = np.random.choice(driver_tips, size=len(driver_tips), replace=True)
-    bootstrap_medians.append(np.median(resample))
+# Phase 1 — Bootstrapping Non-Parametric Uncertainty
 
-bootstrap_medians = np.array(bootstrap_medians)
+Driver tip distributions are **zero-inflated and heavily skewed**, making standard parametric confidence intervals unreliable.
 
-lower = np.percentile(bootstrap_medians, 2.5)
-upper = np.percentile(bootstrap_medians, 97.5)
+A synthetic dataset of **250 tips** was created:
+- 100 zero tips
+- 150 tips from an exponential distribution
 
-print("\n=== Step 1.2 ===")
-print(f"95% Confidence Interval: [${lower:.2f}, ${upper:.2f}]")
+A **manual bootstrap procedure** was implemented:
+1. Resample the dataset **10,000 times with replacement**
+2. Compute the **median tip** for each sample
+3. Use percentiles to calculate the **95% confidence interval**
 
-# =============================================================================
-# PHASE 2 — Falsification in Logistics A/B Testing
-# =============================================================================
+This produces an **asymmetric confidence interval**, reflecting the skewed distribution of tip data.
 
-# Step 2.1 — Synthetic A/B Test Data
-np.random.seed(42)
-control   = np.random.normal(loc=35, scale=5, size=500)
-treatment = np.random.lognormal(mean=3.4, sigma=0.4, size=500)
+---
 
-observed_diff = np.mean(control) - np.mean(treatment)
+# Phase 2 — Permutation Testing for Algorithm Evaluation
 
-print("\n=== Step 2.1 ===")
-print(f"Control   — Mean: {np.mean(control):.2f}, SD: {np.std(control):.2f}")
-print(f"Treatment — Mean: {np.mean(treatment):.2f}, SD: {np.std(treatment):.2f}")
-print(f"Observed Difference (Control - Treatment): {observed_diff:.2f}")
+SwiftCart introduced a **Batch Routing algorithm** intended to reduce delivery times.
 
-# Step 2.2 — Manual Permutation Test
-combined = np.concatenate([control, treatment])
+Because the treatment group contains **extreme outliers**, the assumptions of a traditional t-test are violated.
 
-n_iterations = 5000
-simulated_diffs = []
+Two delivery groups were simulated:
+- Control: Normal distribution (mean = 35 min, sd = 5)
+- Treatment: Log-normal distribution (mean = 3.4, sigma = 0.4)
 
-for _ in range(n_iterations):
-    shuffled = np.random.permutation(combined)
-    group_a  = shuffled[:500]
-    group_b  = shuffled[500:]
-    simulated_diffs.append(np.mean(group_a) - np.mean(group_b))
+A **manual permutation test** was used:
+1. Combine all deliveries
+2. Shuffle the dataset
+3. Split into two groups
+4. Compute the difference in means
+5. Repeat **5,000 times**
 
-simulated_diffs = np.array(simulated_diffs)
-p_value = np.mean(np.abs(simulated_diffs) >= np.abs(observed_diff))
+The **empirical p-value** equals the proportion of simulated differences as extreme as the observed result.
 
-print("\n=== Step 2.2 ===")
-print(f"Observed Difference: {observed_diff:.2f}")
-print(f"Empirical P-value:   {p_value:.4f}")
+---
 
-# =============================================================================
-# PHASE 3 — Causal Control & Selection Bias Mitigation
-# =============================================================================
+# Phase 3 — Causal Inference and Selection Bias
 
-# Step 3.1 — Naive SDO
-df = pd.read_csv('swiftcart_loyalty.csv')
+SwiftCart claims **SwiftPass subscribers spend 300% more per month**.
 
-subs     = df[df['subscriber'] == 1]
-non_subs = df[df['subscriber'] == 0]
+However, this is likely driven by **selection bias**, since heavy users are more likely to subscribe.
 
-mean_subs     = subs['post_spend'].mean()
-mean_non_subs = non_subs['post_spend'].mean()
-SDO = mean_subs - mean_non_subs
+Dataset: `swiftcart_loyalty.csv`
 
-print("\n=== Step 3.1 ===")
-print(f"Mean Post-Spend (Subscribers):     ${mean_subs:.2f}")
-print(f"Mean Post-Spend (Non-Subscribers): ${mean_non_subs:.2f}")
-print(f"Naive SDO: ${SDO:.2f}  ({(SDO / mean_non_subs) * 100:.1f}% difference)")
+Variables include:
+- pre-treatment order volume
+- account age
+- historical support tickets
+- post-treatment spending
+- subscription status
 
-# Step 3.2 — Propensity Score Matching (PSM)
-covariates = ['pre_spend', 'account_age', 'support_tickets']
-X = df[covariates]
-D = df['subscriber']
+### Naive Estimate
+The **Simple Difference in Outcomes (SDO)** compares spending between subscribers and non-subscribers.
 
-model = LogisticRegression()
-model.fit(X, D)
-df['propensity_score'] = model.predict_proba(X)[:, 1]
-
-subs     = df[df['subscriber'] == 1]
-non_subs = df[df['subscriber'] == 0]
-
-nn = NearestNeighbors(n_neighbors=1)
-nn.fit(non_subs[['propensity_score']])
-indices = nn.kneighbors(subs[['propensity_score']])[1].flatten()
-matched_control = non_subs.iloc[indices]
-
-ATT = subs['post_spend'].mean() - matched_control['post_spend'].mean()
-
-print("\n=== Step 3.2 ===")
-print(f"Causal ATT (PSM): ${ATT:.2f}")
-
-# =============================================================================
-# PHASE 4 — Love Plot
-# =============================================================================
-
-df_unmatched = df.copy()
-df_matched   = pd.concat([subs, matched_control])
-
-def compute_smd(dataframe, covariates):
-    smds = {}
-    treated = dataframe[dataframe['subscriber'] == 1]
-    control = dataframe[dataframe['subscriber'] == 0]
-    for col in covariates:
-        diff   = treated[col].mean() - control[col].mean()
-        pooled = np.sqrt((treated[col].std()**2 + control[col].std()**2) / 2)
-        smds[col] = abs(diff / pooled)
-    return smds
-
-smd_before  = compute_smd(df_unmatched, covariates)
-smd_after   = compute_smd(df_matched,   covariates)
-features    = list(smd_before.keys())
-vals_before = [smd_before[f] for f in features]
-vals_after  = [smd_after[f]  for f in features]
-
-fig, ax = plt.subplots(figsize=(9, 5))
-fig.patch.set_facecolor('#0f1117')
-ax.set_facecolor('#0f1117')
-
-ax.axvline(x=0.1, color='#ff6b6b', linestyle='--', linewidth=1.2)
-ax.axvline(x=0.0, color='white',   linestyle='-',  linewidth=0.5, alpha=0.3)
-
-y_pos = range(len(features))
-for i, feat in enumerate(features):
-    ax.plot([vals_before[i], vals_after[i]], [i, i], color='#444', linewidth=1.5, zorder=1)
-    ax.scatter(vals_before[i], i, color='#e05c5c', s=100, zorder=2)
-    ax.scatter(vals_after[i],  i, color='#4fc3f7', s=100, zorder=2)
-
-ax.set_yticks(list(y_pos))
-ax.set_yticklabels(features, color='white', fontsize=12)
-ax.set_xlabel('Absolute Standardized Mean Difference (SMD)', color='white', fontsize=11)
-ax.set_title('Love Plot — Covariate Balance Before vs After PSM',
-             color='white', fontsize=14, fontweight='bold', pad=15)
-ax.tick_params(colors='white')
-for spine in ax.spines.values():
-    spine.set_edgecolor('#333')
-
-ax.legend(
-    handles=[
-        mpatches.Patch(color='#e05c5c', label='Before Matching'),
-        mpatches.Patch(color='#4fc3f7', label='After Matching'),
-        mpatches.Patch(color='#ff6b6b', label='SMD = 0.1 threshold'),
-    ],
-    facecolor='#1a1d27', labelcolor='white', fontsize=10, loc='lower right'
-)
-
-plt.tight_layout()
-plt.show()
+However:
