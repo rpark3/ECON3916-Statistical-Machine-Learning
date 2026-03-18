@@ -1,9 +1,4 @@
-"""
-Run this script to generate README.md in the current directory.
-    python write_readme.py
-"""
-
-readme = """# The Architecture of Dimensionality: Hedonic Pricing & the Frisch-Waugh-Lovell Theorem
+"""# The Architecture of Dimensionality: Hedonic Pricing & the Frisch-Waugh-Lovell Theorem
 
 ---
 
