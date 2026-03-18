@@ -1,4 +1,4 @@
-"""# The Architecture of Dimensionality: Hedonic Pricing & the Frisch-Waugh-Lovell Theorem
+## The Architecture of Dimensionality: Hedonic Pricing & the Frisch-Waugh-Lovell Theorem
 
 ---
 
