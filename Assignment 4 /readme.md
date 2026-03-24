@@ -1,4 +1,4 @@
-"""# OmniCare Analytics — Dynamic Medical Pricing & Patient Risk
+# OmniCare Analytics — Dynamic Medical Pricing & Patient Risk
 
 ## Overview
 This project rebuilds a predictive pricing algorithm for elective imaging procedures (MRIs, CT scans) from statistical first principles. The goal is to identify and fix data issues that were causing volatile and legally problematic pricing recommendations.
